@@ -523,24 +523,33 @@
 
     ... imong HTML elements ...
 
-    <script>
-        ... imong JS code ...
+   <script>
+function playTick() {
+    document.getElementById('sndTick').play();
+}
 
-        // Play Functions (INSERT HERE)
-        function playTick() {...}
-        function playWin() {...}
-        function playJackpot() {...}
-        function playTryAgain() {...}
-        function playEnd() {...}
+function playWin() {
+    document.getElementById('sndWin').play();
+}
 
-    </script>
+function playJackpot() {
+    document.getElementById('sndJackpot').play();
+}
 
-    <!-- SOUND FILES — PINA KA UBOS -->
-    <audio id="sndTick" ... ></audio>
-    <audio id="sndWin" ... ></audio>
-    <audio id="sndJackpot" ... ></audio>
-    <audio id="sndTryAgain" ... ></audio>
-    <audio id="sndEnd" ... ></audio>
+function playTryAgain() {
+    document.getElementById('sndTryAgain').play();
+}
 
+function playEnd() {
+    document.getElementById('sndEnd').play();
+}
+</script>
+
+   <!-- SOUND FILES -->
+<audio id="sndTick" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/tick.wav?raw=1" preload="auto"></audio>
+<audio id="sndWin" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/win.wav?raw=1" preload="auto"></audio>
+<audio id="sndJackpot" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/jackpot.wav?raw=1" preload="auto"></audio>
+<audio id="sndTryAgain" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/try_again.wav?raw=1" preload="auto"></audio>
+<audio id="sndEnd" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/end.wav?raw=1" preload="auto"></audio>
 </body>
 </html>
