@@ -22,13 +22,15 @@
       <div class="user-label" id="fbName">Logged in as User</div>
     </div>
     <ul class="side-list">
-      <li>📜 Voucher History</li>
-      <li>📱 My Device</li>
-      <li>🏆 Leaderboard</li>
-      <li id="sideMyPoints">⭐ My Points</li>
-      <li>🎡 Spin &amp; Win</li>
-      <li>📩 Contact Support</li>
-    </ul>
+  <li onclick="location.href='/history'">📜 Voucher History</li>
+  <li onclick="location.href='/device'">📱 My Device</li>
+  <li onclick="location.href='/leaderboard'">🏆 Leaderboard</li>
+  <li onclick="openPoints()">⭐ My Points</li>
+  <li onclick="document.getElementById('spinSection').scrollIntoView({behavior:'smooth'})">
+    🎡 Spin & Win
+  </li>
+  <li onclick="location.href='/support'">📩 Contact Support</li>
+</ul>
   </aside>
 
   <div id="overlay" class="overlay"></div>
