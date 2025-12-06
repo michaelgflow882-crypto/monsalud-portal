@@ -1,116 +1,578 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monsalud WiFi Hotspot</title>
-
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #111;
-            color: white;
-        }
-        /* Add your existing styles here */
-    </style>
+  <meta charset="UTF-8">
+  <title>Monsalud WiFi Hotspot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Flask static CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
 </head>
 <body>
 
-    <!-- ========================================= -->
-    <!--   YOUR EXISTING PORTAL UI GOES HERE       -->
-    <!--   Buttons, cards, background, carousel    -->
-    <!-- ========================================= -->
+  <!-- ─────────── TOP BAR ─────────── -->
+  <div class="topbar">
+    <div class="logo-text">Monsalud WiFi Hotspot</div>
+    <div id="menuBtn" class="menu-btn">☰</div>
+  </div>
 
-    <h1 style="text-align:center;">Monsalud WiFi Hotspot</h1>
+  <!-- ─────────── SIDEBAR (LEFT SIDE) ─────────── -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <img id="fbPic" src="https://i.ibb.co/7G5N6hS/user.png" class="user-icon" alt="User">
+      <div class="user-label" id="fbName">Logged in as User</div>
+    </div>
+    <ul class="side-list">
+      <li>📜 Voucher History</li>
+      <li>📱 My Device</li>
+      <li>🏆 Leaderboard</li>
+      <li id="sideMyPoints">⭐ My Points</li>
+      <li>🎡 Spin &amp; Win</li>
+      <li>📩 Contact Support</li>
+    </ul>
+  </aside>
 
-    <!-- Sample Spin Button (KEEP YOUR ORIGINAL ONE) -->
-    <button onclick="startSpin()" style="padding:15px;font-size:20px;">SPIN NOW</button>
+  <div id="overlay" class="overlay"></div>
 
+  <!-- ─────────── HERO / INFO (RIGHT) ─────────── -->
+  <section class="hero">
+    <div class="sub" id="greetingText">Good afternoon 🌤️</div>
+    <div class="info-box">
+      <div class="info-row"><strong>Cebu City</strong></div>
+      <div class="info-row" id="dateText">Wednesday, November 19, 2025</div>
+      <div class="info-row" id="timeText">3:42 PM</div>
+      <div class="weather-row">
+        <span>☁️</span>
+        <span id="weatherText">Loading Cebu weather…</span>
+      </div>
+    </div>
+  </section>
 
-    <!-- ========================================= -->
-    <!--   SOUND FILES (GITHUB RAW LINKS)          -->
-    <!-- ========================================= -->
-    <audio id="sndTick" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/tick.wav?raw=1" preload="auto"></audio>
-    <audio id="sndWin" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/win.wav?raw=1" preload="auto"></audio>
-    <audio id="sndJackpot" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/jackpot.wav?raw=1" preload="auto"></audio>
-    <audio id="sndTryAgain" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/try_again.wav?raw=1" preload="auto"></audio>
-    <audio id="sndEnd" src="https://github.com/michaelgflow882-crypto/monsalud-portal/raw/main/static/sounds/end.wav?raw=1" preload="auto"></audio>
+  <!-- ─────────── SLIDER ─────────── -->
+  <section class="slider" id="slider">
+    <figure class="slide active">
+      <img src="https://i.postimg.cc/PxBqyD9L/MOALBOAL-REEF-20251109-221455-0000.jpg" alt="MOALBOAL REEF">
+      <figcaption>📍 MOALBOAL REEF</figcaption>
+    </figure>
+    <figure class="slide">
+      <img src="https://i.postimg.cc/LsJRWXzN/OSLOB-WHALE-SHARK-20251110-172755-0000.jpg" alt="OSLOB WHALE SHARK">
+      <figcaption>📍 OSLOB WHALE SHARK</figcaption>
+    </figure>
+    <figure class="slide">
+      <img src="https://i.postimg.cc/htJ5W75d/TOPS-20251110-172318-0000.jpg" alt="TOPS CEBU">
+      <figcaption>📍 TOPS CEBU</figcaption>
+    </figure>
+    <figure class="slide">
+      <img src="https://i.postimg.cc/jj7mNJ6s/10000-ROSES-20251110-170913-0000.jpg" alt="10000 Roses">
+      <figcaption>📍 10,000 Roses</figcaption>
+    </figure>
+  </section>
 
+  <!-- ─────────── VOUCHER ENTRY ─────────── -->
+  <section class="voucher">
+    <input id="voucherInput" type="text" placeholder="Enter voucher code">
+    <button id="connectBtn">Connect</button>
+  </section>
 
-    <!-- ========================================= -->
-    <!--       JAVASCRIPT SECTION                  -->
-    <!-- ========================================= -->
-    <script>
+  <!-- ─────────── PRICING CARDS ─────────── -->
+  <section class="pricing">
+    <div class="card free" data-price="₱0" data-label="Free Wi-Fi · 30 mins/day">
+      <span>₱0</span>
+      <small>Free Wi-Fi</small>
+      <small>30 mins/day</small>
+    </div>
+    <div class="card blue" data-price="₱6" data-label="2 Hours · With pause">
+      <span>₱6</span>
+      <small>2 Hours</small>
+      <small>With pause</small>
+    </div>
+    <div class="card violet" data-price="₱12" data-label="5 Hours · With pause">
+      <span>₱12</span>
+      <small>5 Hours</small>
+      <small>With pause</small>
+    </div>
+    <div class="card gold" data-price="₱23" data-label="1 Day · No pause">
+      <span>₱23</span>
+      <small>1 Day</small>
+      <small>No pause</small>
+    </div>
+    <div class="card orange" data-price="₱50" data-label="3 Days · No pause">
+      <span>₱50</span>
+      <small>3 Days</small>
+      <small>No pause</small>
+    </div>
+    <div class="card silver" data-price="₱100" data-label="7 Days · No pause">
+      <span>₱100</span>
+      <small>7 Days</small>
+      <small>No pause</small>
+    </div>
+    <div class="card plum" data-price="₱200" data-label="14 Days · No pause">
+      <span>₱200</span>
+      <small>14 Days</small>
+      <small>No pause</small>
+    </div>
+    <div class="card sunny" data-price="₱400" data-label="30 Days · No pause">
+      <span>₱400</span>
+      <small>30 Days</small>
+      <small>No pause</small>
+    </div>
+  </section>
 
-        /* =========================================================
-           SOUND FUNCTIONS
-        ========================================================== */
-        function playTick() {
-            document.getElementById("sndTick").play();
+  <!-- ─────────── SPIN & WIN SECTION ─────────── -->
+  <section class="spin-section">
+    <h2>🎡 Spin &amp; Win</h2>
+    <p class="spin-desc">10 points = 1 spin (demo mode)</p>
+
+    <div class="spin-wrapper">
+      <canvas id="wheelCanvas" width="300" height="300"></canvas>
+      <div class="pointer"></div>
+    </div>
+
+    <button id="spinBtn" class="spin-btn">Spin Now</button>
+    <div id="spinStatus" class="spin-status"></div>
+
+    <button id="myPointsBtn" class="points-btn">My Points</button>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="powered">Powered by MG Wellness Tech — Ireneo</div>
+  </footer>
+
+  <!-- ─────────── MY POINTS MODAL ─────────── -->
+  <div id="pointsModal" class="modal-layer">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h3>My Points</h3>
+      <p><strong>Active points:</strong> <span id="activePoints">0</span></p>
+      <p><strong>Total points (this year):</strong> <span id="totalPoints">0</span></p>
+      <p class="modal-note">Resets automatically every January 1 • Frontend demo only</p>
+      <div class="modal-actions">
+        <button id="closePoints" class="btn-outline">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── PRICING MODAL (BUY / ENTER / CANCEL) ─────────── -->
+  <div id="pricingModal" class="modal-layer">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h3 id="pmTitle">Voucher details</h3>
+      <p id="pmDetails"></p>
+      <p class="modal-note">Buy = go to payment (soon) · Enter = focus voucher box.</p>
+      <div class="modal-actions">
+        <button id="pmCancel" class="btn-outline">Cancel</button>
+        <button id="pmEnter" class="btn-primary">Enter</button>
+        <button id="pmBuy" class="btn-danger">Buy</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─────────── SOUND EFFECTS (served by Flask static) ─────────── -->
+  <audio id="sndTick"     src="{{ url_for('static', filename='sounds/tick.wav') }}" preload="auto"></audio>
+  <audio id="sndWin"      src="{{ url_for('static', filename='sounds/win.wav') }}" preload="auto"></audio>
+  <audio id="sndJackpot"  src="{{ url_for('static', filename='sounds/jackpot.wav') }}" preload="auto"></audio>
+  <audio id="sndTryAgain" src="{{ url_for('static', filename='sounds/try_again.wav') }}" preload="auto"></audio>
+  <audio id="sndEnd"      src="{{ url_for('static', filename='sounds/end.wav') }}" preload="auto"></audio>
+
+  <!-- ─────────── JAVASCRIPT START ─────────── -->
+  <script>
+
+    /* ========== CONFIG: GOOGLE SHEETS WEBHOOK URL ========== */
+    const SHEETS_WEBHOOK_URL =
+      "https://script.google.com/macros/s/AKfycbwpwUw-6KavvX4OzhZlp07tq7yczgvwkmA1aXygq7JBzuHCqWBu_KoLsmXAGZyhmV3_5w/exec"; // <-- ilisi boss kung lahi na
+
+    /* ========== BASIC DOM REFERENCES ========== */
+    const sidebar   = document.getElementById("sidebar");
+    const overlay   = document.getElementById("overlay");
+    const menuBtn   = document.getElementById("menuBtn");
+    const fbNameEl  = document.getElementById("fbName");
+    let   fbName    = fbNameEl ? fbNameEl.textContent.trim() : "Guest";
+
+    /* ========== SIDEBAR MENU ========== */
+    menuBtn.onclick = () => {
+      sidebar.classList.add("open");
+      overlay.classList.add("show");
+      menuBtn.style.opacity = "0";
+    };
+    overlay.onclick = () => {
+      sidebar.classList.remove("open");
+      overlay.classList.remove("show");
+      menuBtn.style.opacity = "1";
+    };
+
+    /* ========== GREETING ========== */
+    function updateGreeting(){
+      const hour = new Date().getHours();
+      const g = document.getElementById("greetingText");
+      if(hour < 12) g.textContent = "Good morning ☀️";
+      else if(hour < 17) g.textContent = "Good afternoon 🌤️";
+      else if(hour < 20) g.textContent = "Good evening 🌆";
+      else g.textContent = "Good night 🌙";
+    }
+    updateGreeting();
+    setInterval(updateGreeting, 60_000);
+
+    /* ========== CLOCK + DATE ========== */
+    function updateClock(){
+      const now = new Date();
+      document.getElementById("dateText").textContent =
+        now.toLocaleDateString("en-PH", {
+          weekday:"long",
+          month:"long",
+          day:"numeric",
+          year:"numeric"
+        });
+      document.getElementById("timeText").textContent =
+        now.toLocaleTimeString("en-US", {
+          hour:"2-digit",
+          minute:"2-digit"
+        });
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    /* ========== WEATHER (OpenWeather + Cebu fallback) ========== */
+    const WEATHER_KEY = "8310e25324f43d028f09f93bad3cdeaf";
+    const weatherEl   = document.getElementById("weatherText");
+
+    function setWeatherText(text){
+      if (weatherEl) weatherEl.textContent = text;
+    }
+
+    function applyWeatherData(d){
+      if (!d || !d.main || !d.weather || !d.weather[0]) return;
+      const temp = d.main.temp;
+      const desc = d.weather[0].description;
+      setWeatherText(`${temp.toFixed(1)}°C — ${desc}`);
+    }
+
+    function fetchWeatherByCoords(lat, lon){
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric`)
+        .then(r => r.json())
+        .then(applyWeatherData)
+        .catch(() => {});
+    }
+
+    function fetchWeatherCebu(){
+      // Cebu City fallback – walay "Location denied"
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=Cebu City,PH&appid=${WEATHER_KEY}&units=metric`)
+        .then(r => r.json())
+        .then(applyWeatherData)
+        .catch(() => {
+          setWeatherText("Cebu weather unavailable");
+        });
+    }
+
+    if (WEATHER_KEY) {
+      if (navigator.geolocation) {
+        let gotLocation = false;
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            gotLocation = true;
+            fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+          },
+          err => {
+            // user denied or error → Cebu fallback
+            fetchWeatherCebu();
+          }
+        );
+        // safety timeout (5s) – kung walay location, fallback gihapon
+        setTimeout(() => {
+          if (!gotLocation) fetchWeatherCebu();
+        }, 5000);
+      } else {
+        fetchWeatherCebu();
+      }
+    }
+
+    /* ========== SLIDESHOW ========== */
+    const slides = document.querySelectorAll(".slide");
+    let slideIndex = 0;
+    function nextSlide(){
+      if (!slides.length) return;
+      slides[slideIndex].classList.remove("active");
+      slideIndex = (slideIndex + 1) % slides.length;
+      slides[slideIndex].classList.add("active");
+    }
+    setInterval(nextSlide, 4000);
+
+    /* ========== POINTS STORAGE (ACTIVE + TOTAL) ========== */
+    const YEAR_KEY   = "mg_points_year";
+    const ACTIVE_KEY = "mg_active_points";
+    const TOTAL_KEY  = "mg_total_points";
+
+    function loadPoints(){
+      const nowYear   = new Date().getFullYear();
+      const savedYear = parseInt(localStorage.getItem(YEAR_KEY) || "0", 10);
+      if(savedYear !== nowYear){
+        localStorage.setItem(YEAR_KEY, nowYear.toString());
+        localStorage.setItem(ACTIVE_KEY, "0");
+        localStorage.setItem(TOTAL_KEY, "0");
+      }
+      return {
+        active: parseInt(localStorage.getItem(ACTIVE_KEY) || "0", 10),
+        total:  parseInt(localStorage.getItem(TOTAL_KEY)  || "0", 10)
+      };
+    }
+
+    function savePoints(active, total){
+      localStorage.setItem(ACTIVE_KEY, active.toString());
+      localStorage.setItem(TOTAL_KEY,  total.toString());
+    }
+
+    function refreshPointsUI(){
+      const pts = loadPoints();
+      document.getElementById("activePoints").textContent = pts.active;
+      document.getElementById("totalPoints").textContent  = pts.total;
+    }
+
+    let points = loadPoints();
+
+    /* ========== MY POINTS MODAL ========== */
+    const pointsModal  = document.getElementById("pointsModal");
+    const myPointsBtn  = document.getElementById("myPointsBtn");
+    const sideMyPoints = document.getElementById("sideMyPoints");
+    const closePoints  = document.getElementById("closePoints");
+
+    function openPoints(){
+      points = loadPoints();
+      refreshPointsUI();
+      pointsModal.classList.add("show");
+    }
+    function closePointsModal(){
+      pointsModal.classList.remove("show");
+    }
+
+    myPointsBtn.onclick   = openPoints;
+    sideMyPoints.onclick  = openPoints;
+    closePoints.onclick   = closePointsModal;
+    pointsModal.querySelector(".modal-backdrop").onclick = closePointsModal;
+
+    /* ========== PRICING MODAL (BUY / ENTER / CANCEL) ========== */
+    const pricingModal = document.getElementById("pricingModal");
+    const pmTitle      = document.getElementById("pmTitle");
+    const pmDetails    = document.getElementById("pmDetails");
+    const pmCancel     = document.getElementById("pmCancel");
+    const pmEnter      = document.getElementById("pmEnter");
+    const pmBuy        = document.getElementById("pmBuy");
+    const voucherInput = document.getElementById("voucherInput");
+
+    function openPricing(price, label){
+      pmTitle.textContent   = `Plan ${price}`;
+      pmDetails.textContent = label;
+      pricingModal.classList.add("show");
+    }
+    function closePricing(){
+      pricingModal.classList.remove("show");
+    }
+
+    document.querySelectorAll(".card").forEach(card=>{
+      const price = card.dataset.price;
+      const label = card.dataset.label;
+      card.addEventListener("click", ()=>openPricing(price,label));
+    });
+
+    pmCancel.onclick = closePricing;
+    pricingModal.querySelector(".modal-backdrop").onclick = closePricing;
+    pmEnter.onclick = () => {
+      closePricing();
+      voucherInput.focus();
+    };
+    pmBuy.onclick = () => {
+      alert("Buy flow / payment coming soon (backend integration).");
+    };
+    /* ========== SPIN WHEEL (PREMIUM STYLE + SOUNDS) ========== */
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx    = canvas.getContext("2d");
+        const cw     = canvas.width;
+        const ch     = canvas.height;
+        const cx     = cw / 2;
+        const cy     = ch / 2;
+
+        const spinBtn    = document.getElementById("spinBtn");
+        const spinStatus = document.getElementById("spinStatus");
+
+        const prizes = [
+          "2 Hours",
+          "5 Hours",
+          "12 Hours",
+          "TRY AGAIN",
+          "+1 Point",
+          "+2 Points",
+          "+4 Points",
+          "+8 Points"
+        ];
+
+        const sliceCount = prizes.length;
+        const sliceAngle = (2 * Math.PI) / sliceCount;
+
+        /* DRAW WHEEL – glossy gradient style */
+        function drawWheel() {
+          const colors = [
+            "#ffeb3b", "#ff7043", "#29b6f6", "#ab47bc",
+            "#66bb6a", "#ffca28", "#ef5350", "#26a69a"
+          ];
+
+          ctx.clearRect(0, 0, cw, ch);
+
+          for (let i = 0; i < sliceCount; i++) {
+            const start = i * sliceAngle;
+            const end   = start + sliceAngle;
+
+            const grad = ctx.createRadialGradient(cx, cy, 40, cx, cy, 140);
+            grad.addColorStop(0, "rgba(255,255,255,0.9)");
+            grad.addColorStop(0.3, colors[i % colors.length]);
+            grad.addColorStop(1,   "#111827");
+
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.fillStyle = grad;
+            ctx.arc(cx, cy, 140, start, end);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(start + sliceAngle / 2);
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#002b55";
+            ctx.font = "bold 15px Arial";
+            ctx.fillText(prizes[i], 90, 5);
+            ctx.restore();
+          }
+
+          // center circle
+          ctx.beginPath();
+          ctx.arc(cx, cy, 40, 0, 2 * Math.PI);
+          const hubGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 40);
+          hubGrad.addColorStop(0, "#ffffff");
+          hubGrad.addColorStop(1, "#cfd8dc");
+          ctx.fillStyle = hubGrad;
+          ctx.fill();
+        }
+        drawWheel();
+
+        /* ========== SOUND HELPERS ========== */
+        const sndTick     = document.getElementById("sndTick");
+        const sndWin      = document.getElementById("sndWin");
+        const sndEnd      = document.getElementById("sndEnd");
+        const sndTryAgain = document.getElementById("sndTryAgain");
+        const sndJackpot  = document.getElementById("sndJackpot");
+
+        function playSound(audioEl){
+          if (!audioEl) return;
+          try{
+            audioEl.currentTime = 0;
+            audioEl.play();
+          }catch(e){
+            console.warn("Audio blocked:", e);
+          }
         }
 
-        function playWin() {
-            document.getElementById("sndWin").play();
-        }
+        /* ========== SPIN LOGIC – forever accurate ========== */
+        let currentRotation = 0;   // radians
+        let spinning        = false;
 
-        function playJackpot() {
-            document.getElementById("sndJackpot").play();
-        }
+        spinBtn.onclick = () => {
+          if (spinning) return;
+          spinning = true;
+          spinBtn.disabled = true;
+          spinStatus.textContent = "Spinning…";
 
-        function playTryAgain() {
-            document.getElementById("sndTryAgain").play();
-        }
+          // first tick (user interaction)
+          playSound(sndTick);
 
-        function playEnd() {
-            document.getElementById("sndEnd").play();
-        }
+          const twoPi       = 2 * Math.PI;
+          const extraTurns  = 5 + Math.random() * 2;        // 5–7 full spins
+          const randomAngle = Math.random() * twoPi;        // random stop
+          const spinMs      = 4500;
 
-        /* =========================================================
-           SPIN LOGIC (Replace with your actual Spin function)
-        ========================================================== */
-        let spinning = false;
+          const startRotation  = currentRotation;
+          const targetRotation = startRotation + extraTurns * twoPi + randomAngle;
+          currentRotation      = targetRotation;
 
-        function startSpin() {
-            if (spinning) return;
-            spinning = true;
+          canvas.style.transition = `transform ${spinMs/1000}s cubic-bezier(0.12,0.6,0.1,1)`;
+          canvas.style.transform  = `rotate(${targetRotation}rad)`;
 
-            let ticks = 0;
-            let spinInterval = setInterval(() => {
-                playTick();
-                ticks++;
+          // ticking sound while spinning
+          let tickTimer = setInterval(() => {
+            playSound(sndTick);
+          }, 90);
 
-                if (ticks >= 20) {
-                    clearInterval(spinInterval);
-                    finishSpin();
-                }
-            }, 100);
-        }
+          setTimeout(() => {
+            clearInterval(tickTimer);
 
-        function finishSpin() {
+            // NORMALIZE ANGLE (0..2π)
+            let normalized = currentRotation % twoPi;
+            if (normalized < 0) normalized += twoPi;
 
-            // SAMPLE RESULT: You can replace this logic with your real outcome
-            let outcomes = ["win", "jackpot", "try"];
-            let result = outcomes[Math.floor(Math.random() * outcomes.length)];
+            // pointer is at TOP (270° → -90° → -π/2)
+            const pointerAngle = -Math.PI / 2;
+            let diff = pointerAngle - normalized;
+            diff = (diff % twoPi + twoPi) % twoPi; // 0..2π
 
-            if (result === "win") {
-                playWin();
-                alert("You won 5 points!");
+            const index = Math.floor(diff / sliceAngle) % sliceCount;
+            const result = prizes[index];
+
+            spinStatus.textContent = "🎉 Result: " + result;
+
+            // Determine points
+            let addPoints = 0;
+            const match = result.match(/^\+(\d+)\s+Point/);
+            if (match) {
+              addPoints = parseInt(match[1], 10);
+              points = loadPoints();
+              points.active += addPoints;
+              points.total  += addPoints;
+              savePoints(points.active, points.total);
             }
-            else if (result === "jackpot") {
-                playJackpot();
-                alert("JACKPOT! 50 POINTS!");
-            }
-            else {
-                playTryAgain();
-                alert("Try again!");
+
+            // Decide sound
+            if (result === "TRY AGAIN") {
+              playSound(sndTryAgain);
+            } else if (result === "12 Hours") {
+              // jackpot sound ONLY for 12 Hours
+              playSound(sndJackpot);
+            } else {
+              playSound(sndWin);
             }
 
-            playEnd();
-            spinning = false;
+            // small end click
+            setTimeout(() => playSound(sndEnd), 250);
+
+            // log to Google Sheets
+            if (SHEETS_WEBHOOK_URL && SHEETS_WEBHOOK_URL.startsWith("http")) {
+              const payload = {
+                branch:        "Branch 1 - Cogon Pardo",
+                source:        "spin",
+                timestamp:     new Date().toISOString(),
+                fb_name:       fbName,
+                prize:         result,
+                add_points:    addPoints,
+                active_points: points.active,
+                total_points:  points.total
+              };
+              logSpinToSheet(payload);
+            }
+
+            spinning        = false;
+            spinBtn.disabled = false;
+          }, spinMs + 80);
+        };
+
+        /* ========== LOGGING FUNCTION ========== */
+        function logSpinToSheet(data) {
+          try {
+            fetch(SHEETS_WEBHOOK_URL, {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data)
+            });
+          } catch (e) {
+            console.warn("Log error:", e);
+          }
         }
-
-    </script>
-
-</body>
-</html>
+      </script>
+    </body>
+    </html>
