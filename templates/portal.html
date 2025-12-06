@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Monsalud WiFi Hotspot</title>
-  <link rel="stylesheet" href="static/base.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Flask static CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
 </head>
 <body>
 
@@ -40,7 +42,7 @@
       <div class="info-row" id="timeText">3:42 PM</div>
       <div class="weather-row">
         <span>☁️</span>
-        <span id="weatherText">29.8°C — broken clouds</span>
+        <span id="weatherText">Loading Cebu weather…</span>
       </div>
     </div>
   </section>
@@ -165,18 +167,19 @@
     </div>
   </div>
 
-  <!-- ─────────── SOUND EFFECTS (local .wav files) ─────────── -->
-  <!-- Folder structure: /sounds/tick.wav etc (same level as portal.html) -->
-  <audio id="sndTick"     src="sounds/tick.wav"     preload="auto"></audio>
-  <audio id="sndWin"      src="sounds/win.wav"      preload="auto"></audio>
-  <audio id="sndJackpot"  src="sounds/jackpot.wav"  preload="auto"></audio>
-  <audio id="sndTryAgain" src="sounds/try_again.wav" preload="auto"></audio>
-  <audio id="sndEnd"      src="sounds/end.wav"      preload="auto"></audio>
+  <!-- ─────────── SOUND EFFECTS (served by Flask static) ─────────── -->
+  <audio id="sndTick"     src="{{ url_for('static', filename='sounds/tick.wav') }}" preload="auto"></audio>
+  <audio id="sndWin"      src="{{ url_for('static', filename='sounds/win.wav') }}" preload="auto"></audio>
+  <audio id="sndJackpot"  src="{{ url_for('static', filename='sounds/jackpot.wav') }}" preload="auto"></audio>
+  <audio id="sndTryAgain" src="{{ url_for('static', filename='sounds/try_again.wav') }}" preload="auto"></audio>
+  <audio id="sndEnd"      src="{{ url_for('static', filename='sounds/end.wav') }}" preload="auto"></audio>
 
-  <!-- ─────────── JAVASCRIPT ─────────── -->
+  <!-- ─────────── JAVASCRIPT START ─────────── -->
   <script>
+
     /* ========== CONFIG: GOOGLE SHEETS WEBHOOK URL ========== */
-    const SHEETS_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbwpwUw-6KavvX4OzhZlp07tq7yczgvwkmA1aXygq7JBzuHCqWBu_KoLsmXAGZyhmV3_5w/exec"; // <-- ilisi boss
+    const SHEETS_WEBHOOK_URL =
+      "https://script.google.com/macros/s/AKfycbwpwUw-6KavvX4OzhZlp07tq7yczgvwkmA1aXygq7JBzuHCqWBu_KoLsmXAGZyhmV3_5w/exec"; // <-- ilisi boss kung lahi na
 
     /* ========== BASIC DOM REFERENCES ========== */
     const sidebar   = document.getElementById("sidebar");
@@ -228,23 +231,58 @@
     updateClock();
     setInterval(updateClock, 1000);
 
-    /* ========== WEATHER (OpenWeather) ========== */
-    const WEATHER_KEY = "";
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(pos => {
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric`)
-          .then(r => r.json())
-          .then(d => {
-            if (!d.main || !d.weather) return;
-            const temp = d.main.temp;
-            const w = d.weather[0];
-            document.getElementById("weatherText").textContent =
-              `${temp.toFixed(1)}°C — ${w.description}`;
-          })
-          .catch(() => {});
-      });
+    /* ========== WEATHER (OpenWeather + Cebu fallback) ========== */
+    const WEATHER_KEY = "8310e25324f43d028f09f93bad3cdeaf";
+    const weatherEl   = document.getElementById("weatherText");
+
+    function setWeatherText(text){
+      if (weatherEl) weatherEl.textContent = text;
+    }
+
+    function applyWeatherData(d){
+      if (!d || !d.main || !d.weather || !d.weather[0]) return;
+      const temp = d.main.temp;
+      const desc = d.weather[0].description;
+      setWeatherText(`${temp.toFixed(1)}°C — ${desc}`);
+    }
+
+    function fetchWeatherByCoords(lat, lon){
+      fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric`)
+        .then(r => r.json())
+        .then(applyWeatherData)
+        .catch(() => {});
+    }
+
+    function fetchWeatherCebu(){
+      // Cebu City fallback – walay "Location denied"
+      fetch(`https://api.openweathermap.org/data/2.5/weather?q=Cebu City,PH&appid=${WEATHER_KEY}&units=metric`)
+        .then(r => r.json())
+        .then(applyWeatherData)
+        .catch(() => {
+          setWeatherText("Cebu weather unavailable");
+        });
+    }
+
+    if (WEATHER_KEY) {
+      if (navigator.geolocation) {
+        let gotLocation = false;
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            gotLocation = true;
+            fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude);
+          },
+          err => {
+            // user denied or error → Cebu fallback
+            fetchWeatherCebu();
+          }
+        );
+        // safety timeout (5s) – kung walay location, fallback gihapon
+        setTimeout(() => {
+          if (!gotLocation) fetchWeatherCebu();
+        }, 5000);
+      } else {
+        fetchWeatherCebu();
+      }
     }
 
     /* ========== SLIDESHOW ========== */
@@ -343,178 +381,198 @@
     pmBuy.onclick = () => {
       alert("Buy flow / payment coming soon (backend integration).");
     };
+    /* ========== SPIN WHEEL (PREMIUM STYLE + SOUNDS) ========== */
+        const canvas = document.getElementById("wheelCanvas");
+        const ctx    = canvas.getContext("2d");
+        const cw     = canvas.width;
+        const ch     = canvas.height;
+        const cx     = cw / 2;
+        const cy     = ch / 2;
 
-    /* ========== SPIN WHEEL (GCASH-ACCURATE + SOUNDS) ========== */
-    const canvas = document.getElementById("wheelCanvas");
-    const ctx = canvas.getContext("2d");
-    const cw = canvas.width;
-    const ch = canvas.height;
-    const cx = cw / 2;
-    const cy = ch / 2;
+        const spinBtn    = document.getElementById("spinBtn");
+        const spinStatus = document.getElementById("spinStatus");
 
-    const spinBtn    = document.getElementById("spinBtn");
-    const spinStatus = document.getElementById("spinStatus");
+        const prizes = [
+          "2 Hours",
+          "5 Hours",
+          "12 Hours",
+          "TRY AGAIN",
+          "+1 Point",
+          "+2 Points",
+          "+4 Points",
+          "+8 Points"
+        ];
 
-    const prizes = [
-      "2 Hours",
-      "5 Hours",
-      "12 Hours",
-      "TRY AGAIN",
-      "+1 Point",
-      "+2 Points",
-      "+4 Points",
-      "+8 Points"
-    ];
+        const sliceCount = prizes.length;
+        const sliceAngle = (2 * Math.PI) / sliceCount;
 
-    const sliceCount = prizes.length;
-    const sliceAngle = (2 * Math.PI) / sliceCount;
+        /* DRAW WHEEL – glossy gradient style */
+        function drawWheel() {
+          const colors = [
+            "#ffeb3b", "#ff7043", "#29b6f6", "#ab47bc",
+            "#66bb6a", "#ffca28", "#ef5350", "#26a69a"
+          ];
 
-    /* DRAW WHEEL */
-    function drawWheel() {
-      const colors = [
-        "#ffeb3b", "#ff7043", "#29b6f6", "#ab47bc",
-        "#66bb6a", "#ffca28", "#ef5350", "#26a69a"
-      ];
+          ctx.clearRect(0, 0, cw, ch);
 
-      ctx.clearRect(0, 0, cw, ch);
+          for (let i = 0; i < sliceCount; i++) {
+            const start = i * sliceAngle;
+            const end   = start + sliceAngle;
 
-      for (let i = 0; i < sliceCount; i++) {
-        const start = i * sliceAngle;
-        const end = start + sliceAngle;
+            const grad = ctx.createRadialGradient(cx, cy, 40, cx, cy, 140);
+            grad.addColorStop(0, "rgba(255,255,255,0.9)");
+            grad.addColorStop(0.3, colors[i % colors.length]);
+            grad.addColorStop(1,   "#111827");
 
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.fillStyle = colors[i % colors.length];
-        ctx.arc(cx, cy, 140, start, end);
-        ctx.closePath();
-        ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.fillStyle = grad;
+            ctx.arc(cx, cy, 140, start, end);
+            ctx.closePath();
+            ctx.fill();
 
-        // Labels inside slice
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(start + sliceAngle / 2);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(start + sliceAngle / 2);
+            ctx.textAlign = "center";
+            ctx.fillStyle = "#002b55";
+            ctx.font = "bold 15px Arial";
+            ctx.fillText(prizes[i], 90, 5);
+            ctx.restore();
+          }
 
-        ctx.textAlign = "center";
-        ctx.fillStyle = "#002b55";
-        ctx.font = "bold 15px Arial";
-        ctx.fillText(prizes[i], 90, 5);
+          // center circle
+          ctx.beginPath();
+          ctx.arc(cx, cy, 40, 0, 2 * Math.PI);
+          const hubGrad = ctx.createRadialGradient(cx, cy, 5, cx, cy, 40);
+          hubGrad.addColorStop(0, "#ffffff");
+          hubGrad.addColorStop(1, "#cfd8dc");
+          ctx.fillStyle = hubGrad;
+          ctx.fill();
+        }
+        drawWheel();
 
-        ctx.restore();
-      }
-    }
-    drawWheel();
+        /* ========== SOUND HELPERS ========== */
+        const sndTick     = document.getElementById("sndTick");
+        const sndWin      = document.getElementById("sndWin");
+        const sndEnd      = document.getElementById("sndEnd");
+        const sndTryAgain = document.getElementById("sndTryAgain");
+        const sndJackpot  = document.getElementById("sndJackpot");
 
-    /* ========== SOUND HELPERS ========== */
-    const sndTick     = new Audio("/static/sounds/tick.wav");
-    const sndWin      = new Audio("/static/sounds/win.wav");
-    const sndEnd      = new Audio("/static/sounds/end.wav");
-    const sndTry      = new Audio("/static/sounds/try_again.wav");
-    const sndJackpot  = new Audio("/static/sounds/jackpot.wav");
-
-    function playSound(audioEl){
-      if (!audioEl) return;
-      try{
-        audioEl.currentTime = 0;
-        audioEl.play();
-      }catch(e){
-        console.warn("Audio blocked:", e);
-      }
-    }
-
-    /* ========== SPIN LOGIC – 100% POINTER + SOUNDS ========== */
-    let currentRotation = 0;
-    let spinning = false;
-
-    spinBtn.onclick = () => {
-      if (spinning) return;
-      spinning = true;
-
-      spinStatus.textContent = "Spinning…";
-
-      // first tick right away (user interaction)
-      playSound(sndTick);
-
-      const idx   = Math.floor(Math.random() * sliceCount);   // random prize index
-      const extra = 6;                                        // full spins
-      const sliceDeg = 360 / sliceCount;
-
-      // Pointer at TOP = 270°
-      const targetDeg = (sliceDeg * idx) + (sliceDeg / 2);
-      const finalDeg  = (extra * 360) + 270 - targetDeg;
-      const finalRad  = finalDeg * Math.PI / 180;
-
-      currentRotation += finalRad;
-
-      const spinMs = 4500;
-      canvas.style.transition = `transform ${spinMs/1000}s cubic-bezier(0.12,0.6,0.1,1)`;
-      canvas.style.transform  = `rotate(${currentRotation}rad)`;
-
-      // Ticking sound while spinning
-      let tickTimer = setInterval(() => {
-        playSound(sndTick);
-      }, 90);
-
-      setTimeout(() => {
-        clearInterval(tickTimer);
-
-        const result = prizes[idx];
-        spinStatus.textContent = "🎉 Result: " + result;
-
-        // Determine points
-        let addPoints = 0;
-        const match = result.match(/^\+(\d+)\s+Point/);
-        if (match) {
-          addPoints = parseInt(match[1], 10);
-          points = loadPoints();
-          points.active += addPoints;
-          points.total  += addPoints;
-          savePoints(points.active, points.total);
+        function playSound(audioEl){
+          if (!audioEl) return;
+          try{
+            audioEl.currentTime = 0;
+            audioEl.play();
+          }catch(e){
+            console.warn("Audio blocked:", e);
+          }
         }
 
-        // Decide which sound to play at the end
-        if (result === "TRY AGAIN") {
-          playSound(sndTryAgain);
-        } else if (addPoints >= 8) {
-          playSound(sndJackpot);
-        } else {
-          playSound(sndWin);
+        /* ========== SPIN LOGIC – forever accurate ========== */
+        let currentRotation = 0;   // radians
+        let spinning        = false;
+
+        spinBtn.onclick = () => {
+          if (spinning) return;
+          spinning = true;
+          spinBtn.disabled = true;
+          spinStatus.textContent = "Spinning…";
+
+          // first tick (user interaction)
+          playSound(sndTick);
+
+          const twoPi       = 2 * Math.PI;
+          const extraTurns  = 5 + Math.random() * 2;        // 5–7 full spins
+          const randomAngle = Math.random() * twoPi;        // random stop
+          const spinMs      = 4500;
+
+          const startRotation  = currentRotation;
+          const targetRotation = startRotation + extraTurns * twoPi + randomAngle;
+          currentRotation      = targetRotation;
+
+          canvas.style.transition = `transform ${spinMs/1000}s cubic-bezier(0.12,0.6,0.1,1)`;
+          canvas.style.transform  = `rotate(${targetRotation}rad)`;
+
+          // ticking sound while spinning
+          let tickTimer = setInterval(() => {
+            playSound(sndTick);
+          }, 90);
+
+          setTimeout(() => {
+            clearInterval(tickTimer);
+
+            // NORMALIZE ANGLE (0..2π)
+            let normalized = currentRotation % twoPi;
+            if (normalized < 0) normalized += twoPi;
+
+            // pointer is at TOP (270° → -90° → -π/2)
+            const pointerAngle = -Math.PI / 2;
+            let diff = pointerAngle - normalized;
+            diff = (diff % twoPi + twoPi) % twoPi; // 0..2π
+
+            const index = Math.floor(diff / sliceAngle) % sliceCount;
+            const result = prizes[index];
+
+            spinStatus.textContent = "🎉 Result: " + result;
+
+            // Determine points
+            let addPoints = 0;
+            const match = result.match(/^\+(\d+)\s+Point/);
+            if (match) {
+              addPoints = parseInt(match[1], 10);
+              points = loadPoints();
+              points.active += addPoints;
+              points.total  += addPoints;
+              savePoints(points.active, points.total);
+            }
+
+            // Decide sound
+            if (result === "TRY AGAIN") {
+              playSound(sndTryAgain);
+            } else if (result === "12 Hours") {
+              // jackpot sound ONLY for 12 Hours
+              playSound(sndJackpot);
+            } else {
+              playSound(sndWin);
+            }
+
+            // small end click
+            setTimeout(() => playSound(sndEnd), 250);
+
+            // log to Google Sheets
+            if (SHEETS_WEBHOOK_URL && SHEETS_WEBHOOK_URL.startsWith("http")) {
+              const payload = {
+                branch:        "Branch 1 - Cogon Pardo",
+                source:        "spin",
+                timestamp:     new Date().toISOString(),
+                fb_name:       fbName,
+                prize:         result,
+                add_points:    addPoints,
+                active_points: points.active,
+                total_points:  points.total
+              };
+              logSpinToSheet(payload);
+            }
+
+            spinning        = false;
+            spinBtn.disabled = false;
+          }, spinMs + 80);
+        };
+
+        /* ========== LOGGING FUNCTION ========== */
+        function logSpinToSheet(data) {
+          try {
+            fetch(SHEETS_WEBHOOK_URL, {
+              method: "POST",
+              mode: "no-cors",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(data)
+            });
+          } catch (e) {
+            console.warn("Log error:", e);
+          }
         }
-
-        // small end "click"
-        setTimeout(() => playSound(sndEnd), 250);
-
-        // log to Google Sheets (if URL configured)
-        if (SHEETS_WEBHOOK_URL && SHEETS_WEBHOOK_URL.startsWith("http")) {
-          const payload = {
-            branch:       "Branch 1 - Cogon Pardo",
-            source:       "spin",
-            timestamp:    new Date().toISOString(),
-            fb_name:      fbName,
-            prize:        result,
-            add_points:   addPoints,
-            active_points: points.active,
-            total_points:  points.total
-          };
-          logSpinToSheet(payload);
-        }
-
-        spinning = false;
-      }, spinMs + 200);
-    };
-
-    /* ========== LOGGING FUNCTION ========== */
-    function logSpinToSheet(data) {
-      try {
-        fetch(SHEETS_WEBHOOK_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
-      } catch (e) {
-        console.warn("Log error:", e);
-      }
-    }
-  </script>
-</body>
-</html>
+      </script>
+    </body>
+    </html>
