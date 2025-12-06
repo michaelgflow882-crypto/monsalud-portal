@@ -88,3 +88,19 @@ def speed_test():
 if __name__ == "__main__":
     # Replit uses its own host/port; this works locally too.
     app.run(host="0.0.0.0", port=5000, debug=True)
+
+@app.route("/history")
+def history():
+    return render_template("history.html")
+
+@app.route("/device")
+def device():
+    return render_template("device.html")
+
+@app.route("/leaderboard")
+def leaderboard():
+    return render_template("leaderboard.html")
+
+@app.route("/support")
+def support():
+    return render_template("support.html")
