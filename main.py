@@ -62,6 +62,28 @@ def redeem():
 def health():
     return "ok", 200
 
+# Branch location configuration
+BRANCH_LOCATIONS = {
+    "default": {"name": "MG Wellness Main", "address": "Main Branch"},
+    "branch_a": {"name": "MG Wellness - Branch A", "address": "Branch A Location"},
+    "branch_b": {"name": "MG Wellness - Branch B", "address": "Branch B Location"},
+    "branch_c": {"name": "MG Wellness - Branch C", "address": "Branch C Location"},
+}
+
+@app.route("/speed")
+def speed_test():
+    branch_id = request.args.get("branch", "default")
+    branch = BRANCH_LOCATIONS.get(branch_id, BRANCH_LOCATIONS["default"])
+    theme, mode = theme_now()
+    return render_template(
+        "speed.html",
+        branch_name=branch["name"],
+        branch_address=branch["address"],
+        branch_id=branch_id,
+        theme=theme,
+        mode=mode
+    )
+
 
 if __name__ == "__main__":
     # Replit uses its own host/port; this works locally too.
